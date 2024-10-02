@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Importar useNavigate para redirigir
 import '../styles/loginPC.css';
 import '../styles/loginMobile.css';
 
@@ -6,17 +7,21 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [notification, setNotification] = useState('');
+  const navigate = useNavigate(); // Inicializar useNavigate para redirección
   
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Evita la recarga de la página por defecto.
+    console.log("Formulario enviado"); // Para verificar si la función se ejecuta
   
     const loginData = {
       username: username,
-      password: password
+      password: password,
     };
   
+    console.log("Datos enviados:", loginData); // Verifica que los datos se están enviando correctamente
+  
     try {
-      const response = await fetch('http://localhost:8080/api/login', {
+      const response = await fetch('https://nd34hw0m-8080.brs.devtunnels.ms/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,9 +29,20 @@ const Login = () => {
         body: JSON.stringify(loginData),
       });
   
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+  
       const data = await response.json();
+      console.log("Respuesta del servidor:", data); // Verifica la respuesta del servidor
   
       if (data.rol) {
+        // Almacenar datos en LocalStorage
+        localStorage.setItem('idUsuario', data.idUsuario);
+        localStorage.setItem('username', data.username);
+        localStorage.setItem('rol', data.rol);
+        localStorage.setItem('correo', data.correo);
+  
         // Redirigir según el rol
         switch (data.rol) {
           case 'ADMIN':
@@ -45,21 +61,23 @@ const Login = () => {
             alert('Error en el rol');
         }
       } else {
-        alert(data.error);
+        alert(data.error || 'Credenciales incorrectas');
       }
     } catch (error) {
       console.error('Error en la solicitud:', error);
+      setNotification(`Error al iniciar sesión: ${error.message}`);
     }
   };
+  
 
   return (
     <div>
       <h1>C.E.B.E</h1>
-      
+
       <div id="notification" className={`notification ${notification && 'show'}`}>
         {notification}
       </div>
-      
+
       <div className="login-container">
         <h2>Iniciar Sesión</h2>
         <form onSubmit={handleSubmit}>
